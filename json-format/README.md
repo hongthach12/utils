@@ -26,5 +26,5 @@ See [Configuration Reference](https://cli.vuejs.org/config/).
 
 ### Publish web
 ```
-aws s3 sync dist/ s3://xbro-json-format --profile=sts-thachlh
+yarn deploy
 ```
