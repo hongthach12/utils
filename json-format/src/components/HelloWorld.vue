@@ -1,44 +1,84 @@
 <template>
   <div class="container-fluid">
-    <div class="row" style="    min-height: 90vh;">
+    <div class="row">
+      <div class="col" style="text-align: left; color: red">
+        {{ msg }}
+      </div>
+    </div>
+    <div class="row" style="min-height: 90vh">
       <div class="col" style="">
         <textarea
-          style="width: 100%; height:100%"
+          style="width: 100%; height: 100%"
           v-model="content"
           id=""
         ></textarea>
       </div>
       <div class="col-1">
         <button class="btn btn-primary" @click="format">Format >></button>
+        <button class="btn btn-primary mt-1" @click="minify">Minify</button>
+        <button class="btn btn-primary mt-1" @click="clean">Clean</button>
       </div>
-      <div v-html="formatJson" class="col" style="width: 100%;min-height: 90vh;border: 1px solid;text-align: left;" ref="jsonContent">
-        
-      </div>
+      <div
+        class="col"
+        v-html="formatJson"
+        style="
+          width: 100%;
+          min-height: 90vh;
+          border: 1px solid;
+          text-align: left;
+        "
+        ref="jsonContent"
+      ></div>
     </div>
   </div>
 </template>
 
 <script>
 import JSONFormatter from "json-formatter-js";
+import jsonminify from "jsonminify";
 
 export default {
   name: "HelloWorld",
   data() {
     return {
       content: '{"qwe": 1}',
-      formatJson: null
+      formatJson: null,
+      msg: "",
     };
-  },
-  props: {
-    msg: String,
   },
   mounted() {},
   methods: {
     format() {
-      const formatter = new JSONFormatter(JSON.parse(this.content), 5);
-
-      // document.body.appendChild(formatter.render());
-      this.$refs.jsonContent.appendChild(formatter.render());
+      if (!this.content) {
+        return;
+      }
+      try {
+        const formatter = new JSONFormatter(JSON.parse(this.content), 5);
+        this.$refs.jsonContent.replaceChildren();
+        this.$nextTick(() => {
+          this.$refs.jsonContent.appendChild(formatter.render());
+        });
+      } catch (error) {
+        this.msg = error.message;
+      }
+      // this.formatJson = formatter.render()
+    },
+    minify() {
+      try {
+        this.formatJson = "";
+        this.$nextTick(() => {
+          // this.$refs.jsonContent.replaceChildren();
+          this.formatJson = jsonminify(this.content);
+        });
+      } catch (error) {
+        this.msg = error.message;
+      }
+      // this.$refs.jsonContent.appendChild(jsonminify(this.content));
+    },
+    clean() {
+      this.content = null;
+      this.formatJson = "";
+      this.$refs.jsonContent.replaceChildren();
     },
   },
 };
