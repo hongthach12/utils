@@ -46,7 +46,9 @@ export default {
       msg: "",
     };
   },
-  mounted() {},
+  mounted() {
+    this.content = this.load();
+  },
   methods: {
     format() {
       if (!this.content) {
@@ -58,6 +60,7 @@ export default {
         this.$nextTick(() => {
           this.$refs.jsonContent.appendChild(formatter.render());
         });
+        this.save()
       } catch (error) {
         this.msg = error.message;
       }
@@ -70,6 +73,7 @@ export default {
           // this.$refs.jsonContent.replaceChildren();
           this.formatJson = jsonminify(this.content);
         });
+        this.save()
       } catch (error) {
         this.msg = error.message;
       }
@@ -80,6 +84,12 @@ export default {
       this.formatJson = "";
       this.$refs.jsonContent.replaceChildren();
     },
+    save() {
+      localStorage.setItem('jsonData', this.content);
+    },
+    load() {
+      return localStorage.getItem('jsonData') || "";
+    }
   },
 };
 </script>
