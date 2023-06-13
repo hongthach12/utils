@@ -40,6 +40,7 @@ import type { ToolCategory } from './tools.types';
 import { tool as urlEncoder } from './url-encoder';
 import { tool as urlParser } from './url-parser';
 import { tool as uuidGenerator } from './uuid-generator';
+import { tool as junitXmlToCsv } from './junit-xml-to-csv';
 
 export const toolsByCategory: ToolCategory[] = [
   {
@@ -57,6 +58,7 @@ export const toolsByCategory: ToolCategory[] = [
       colorConverter,
       caseConverter,
       textToNatoAlphabet,
+      junitXmlToCsv,
     ],
   },
   {
