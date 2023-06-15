@@ -1,24 +1,68 @@
 <template>
   <div>
-    <n-card>
-      <n-space align="center" justify="center">
-        <div class="input-group mb-3"><input id="xmlFileInput" class="n-input" type="file" /></div>
-      </n-space>
+    <div class="form-center">
+      <n-upload v-model:file-list="fileList" :on-before-upload="onUpload" :multiple="false" :limit="1">
+        <div>
+          <n-space justify="center">
+            <n-button> Upload XML </n-button>
+          </n-space>
+        </div>
+      </n-upload>
+      <br />
+      <n-form-item label="ignore Test Sulte" label-placement="left">
+        <n-input
+          v-model="numberIgnore"
+          required="true"
+          :on-keyup="onChangeNumberIgnore"
+          placeholder="Number Of Line Inoge To Root Test"
+        />
+      </n-form-item>
+      <n-checkbox
+        v-model="prettyClassTestCase"
+        :on-update:checked="onChangePerrtyClassTestCase"
+        label="pretty class test name"
+        size="large"
+      />
       <br /><br />
       <n-space justify="center">
         <n-button secondary autofocus @click="loadXML"> Load XML </n-button>
         <n-button secondary @click="exportTableToCSV"> Export CSV </n-button>
       </n-space>
-    </n-card>
-    <br /><br />
+      <br /><br />
+    </div>
     <table id="table-container" class="table"></table>
   </div>
 </template>
 
 <script setup>
+import { ref } from 'vue';
+
+const fileUpload = ref(null);
+const fileList = ref([]);
+const numberIgnore = ref(0);
+const prettyClassTestCase = ref(false);
+
+async function onUpload({ file: { file } }) {
+  if (file) {
+    fileList.value = [];
+    fileUpload.value = file;
+  }
+}
+
+async function onChangeNumberIgnore(e) {
+  numberIgnore.value = e.target.value ? e.target.value : 0;
+}
+
+async function onChangePerrtyClassTestCase(value) {
+  prettyClassTestCase.value = value;
+}
+
 function exportTableToCSV() {
-  var fileInput = document.getElementById('xmlFileInput');
-  var file = fileInput.files[0];
+  var file = fileUpload.value;
+  if (!file) {
+    alert('Upload XML Please!');
+    return false;
+  }
   var reader = new FileReader();
   let jsonData;
   reader.onload = function (e) {
@@ -36,6 +80,24 @@ function exportTableToCSV() {
     document.body.removeChild(link);
   };
 
+  reader.readAsText(file);
+}
+
+function loadXML() {
+  var file = fileUpload.value;
+  if (!file) {
+    alert('Upload XML Please!');
+    return false;
+  }
+  var reader = new FileReader();
+  let jsonData;
+  reader.onload = function (e) {
+    var xmlString = e.target.result;
+    var parser = new DOMParser();
+    var xmlDoc = parser.parseFromString(xmlString, 'text/xml');
+    jsonData = getJsonData(xmlDoc);
+    displayJsonAsTable(jsonData);
+  };
   reader.readAsText(file);
 }
 
@@ -82,13 +144,33 @@ function convertToCSV(jsonData) {
   return csv;
 }
 
+function prettyClassTestCaseFormat(text) {
+  if (prettyClassTestCase.value === false) {
+    return text;
+  }
+  // Remove backslashes
+  let formattedText = text.replace(/\\/g, '');
+
+  // Check if the text is in camelCase or snake_case
+  if (/[a-z]+_[a-z]+/i.test(formattedText)) {
+    // Convert snake_case to human readable
+    formattedText = formattedText.replace(/_/g, ' ').toLowerCase();
+  } else if (/[a-z][A-Z]/.test(formattedText)) {
+    // Convert camelCase to human readable
+    formattedText = formattedText.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase();
+  }
+
+  return formattedText;
+}
 function getNodeDataTest(testSuite) {
   let testSuiteName = '';
   let testCaseName = '';
   if (testSuite.nodeName === 'testsuite') {
-    testSuiteName = testSuite.getAttribute('name') ? testSuite.getAttribute('name') : 'Report Total';
+    testSuiteName = testSuite.getAttribute('name')
+      ? prettyClassTestCaseFormat(testSuite.getAttribute('name'))
+      : 'Report Total';
   } else {
-    testCaseName = testSuite.getAttribute('name') ? testSuite.getAttribute('name') : '';
+    testCaseName = testSuite.getAttribute('name') ? prettyClassTestCaseFormat(testSuite.getAttribute('name')) : '';
   }
 
   return {
@@ -102,37 +184,6 @@ function getNodeDataTest(testSuite) {
     skipped: testSuite.getAttribute('skipped') ? testSuite.getAttribute('skipped') : 0,
     time: testSuite.getAttribute('time'),
   };
-}
-
-function getElementsByName(xml, tagName, name) {
-  var elements = xml.getElementsByTagName(tagName);
-  var matchingElements = [];
-
-  for (var i = 0; i < elements.length; i++) {
-    var element = elements[i];
-    if (element.getAttribute('name') === name) {
-      matchingElements.push(element);
-    }
-  }
-
-  return matchingElements[0];
-}
-
-function loadXML() {
-  var fileInput = document.getElementById('xmlFileInput');
-  var file = fileInput.files[0];
-  var reader = new FileReader();
-  let jsonData;
-
-  reader.onload = function (e) {
-    var xmlString = e.target.result;
-    var parser = new DOMParser();
-    var xmlDoc = parser.parseFromString(xmlString, 'text/xml');
-    jsonData = getJsonData(xmlDoc);
-    displayJsonAsTable(jsonData);
-  };
-
-  reader.readAsText(file);
 }
 
 function pushJsonUnitAndFeature(node) {
@@ -154,10 +205,8 @@ function pushJsonUnitAndFeature(node) {
 
 function getJsonData(xml) {
   var jsonData = [];
-  var outerTestSuite = xml.getElementsByTagName('testsuite')[0];
-
-  //Push Data Unit
-  var unitTestSuite = getElementsByName(outerTestSuite, 'testsuite', 'TestSuiltTotal');
+  var testSuites = xml.getElementsByTagName('testsuite');
+  var unitTestSuite = Number(numberIgnore.value) !== 0 ? testSuites[numberIgnore.value - 1] : testSuites[0];
   jsonData.push(pushJsonUnitAndFeature(unitTestSuite));
   return jsonData;
 }
@@ -209,7 +258,7 @@ function displayJsonAsTable(jsonData) {
       }
     }
   }
-
+  tableContainer.innerHTML = '';
   tableContainer.appendChild(table);
 }
 
