@@ -9,14 +9,17 @@
         </div>
       </n-upload>
       <br />
-      <n-form-item label="ignore Test Sulte" label-placement="left">
-        <n-input
-          v-model="numberIgnore"
-          required="true"
-          :on-keyup="onChangeNumberIgnore"
-          placeholder="Number Of Line Inoge To Root Test"
-        />
+      <n-form-item label="Chose Language:" label-placement="left">
+        <n-space>
+          <input id="php" type="radio" name="languageJunit" value="PHP" checked="true" :onChange="onChangeLanguage" />
+          <label for="php">PHP</label><br />
+          <input id="Python" type="radio" name="languageJunit" value="PYTHON" :onChange="onChangeLanguage" />
+          <label for="Python">Python</label><br />
+          <input id="NodeJs" type="radio" name="languageJunit" value="NODEJS" :onChange="onChangeLanguage" />
+          <label for="NodeJs">NodeJs</label>
+        </n-space>
       </n-form-item>
+
       <n-checkbox
         v-model="prettyClassTestCase"
         :on-update:checked="onChangePerrtyClassTestCase"
@@ -39,7 +42,7 @@ import { ref } from 'vue';
 
 const fileUpload = ref(null);
 const fileList = ref([]);
-const numberIgnore = ref(0);
+const languageJunit = ref('PHP');
 const prettyClassTestCase = ref(false);
 
 async function onUpload({ file: { file } }) {
@@ -49,8 +52,8 @@ async function onUpload({ file: { file } }) {
   }
 }
 
-async function onChangeNumberIgnore(e) {
-  numberIgnore.value = e.target.value ? e.target.value : 0;
+async function onChangeLanguage(e) {
+  languageJunit.value = e.target.value ? e.target.value : 'PHP';
 }
 
 async function onChangePerrtyClassTestCase(value) {
@@ -70,7 +73,10 @@ function exportTableToCSV() {
     var parser = new DOMParser();
     var xmlDoc = parser.parseFromString(xmlString, 'text/xml');
     jsonData = getJsonData(xmlDoc);
-    var csv = convertToCSV(jsonData);
+    var csv = '';
+    for (let i = 0; i < jsonData.length; i++) {
+      csv += convertToCSV(jsonData[i], i);
+    }
     var encodedUri = encodeURI('data:text/csv;charset=utf-8,' + csv);
     var link = document.createElement('a');
     link.setAttribute('href', encodedUri);
@@ -101,19 +107,28 @@ function loadXML() {
   reader.readAsText(file);
 }
 
-function convertToCSV(jsonData) {
-  let className = jsonData[0]?.class;
-  delete jsonData[0]?.class;
+function convertToCSV(jsonData, indexRow) {
+  let className = jsonData?.class;
+  delete jsonData?.class;
   var csv = '';
+  if (indexRow === 0) {
+    var headerRow = Object.keys(jsonData);
+    var headerRowData = headerRow
+      .map(function (key) {
+        return '"' + mapheadJson(key) + '"';
+      })
+      .join(',');
+    csv += headerRowData + '\n';
+  }
+  console.log(jsonData);
 
-  // Generate the CSV header row
-  var headerRow = Object.keys(jsonData[0]);
-  var headerRowData = headerRow
-    .map(function (key) {
-      return '"' + mapheadJson(key) + '"';
+  var rowDataTestSuilte = Object.values(jsonData)
+    .map(function (value) {
+      return '"' + value + '"';
     })
     .join(',');
-  csv += headerRowData + '\n';
+
+  csv += rowDataTestSuilte + '\n';
 
   // Generate the CSV data rows
   for (var i = 0; i < className.length; i++) {
@@ -140,7 +155,6 @@ function convertToCSV(jsonData) {
       }
     }
   }
-
   return csv;
 }
 
@@ -165,6 +179,24 @@ function prettyClassTestCaseFormat(text) {
 function getNodeDataTest(testSuite) {
   let testSuiteName = '';
   let testCaseName = '';
+  let assertions = 0;
+  switch (languageJunit.value) {
+    case 'PHP':
+      assertions = testSuite.getAttribute('assertions') ? testSuite.getAttribute('assertions') : 0;
+      break;
+    case 'PYTHON':
+      assertions = testSuite.getAttribute('assertions') ? testSuite.getAttribute('assertions') : 1;
+      if (testSuite.nodeName === 'testsuite') {
+        assertions = testSuite.getAttribute('tests');
+      }
+      break;
+    case 'NODEJS':
+      assertions = testSuite.getAttribute('assertions') ? testSuite.getAttribute('assertions') : 0;
+      break;
+    default:
+      assertions = testSuite.getAttribute('assertions') ? testSuite.getAttribute('assertions') : 0;
+      break;
+  }
   if (testSuite.nodeName === 'testsuite') {
     testSuiteName = testSuite.getAttribute('name')
       ? prettyClassTestCaseFormat(testSuite.getAttribute('name'))
@@ -177,7 +209,7 @@ function getNodeDataTest(testSuite) {
     testSuite: testSuiteName,
     testCaseName: testCaseName,
     tests: testSuite.getAttribute('tests') ? testSuite.getAttribute('tests') : 0,
-    assertions: testSuite.getAttribute('assertions') ? testSuite.getAttribute('assertions') : 0,
+    assertions: assertions,
     errors: testSuite.getAttribute('errors') ? testSuite.getAttribute('errors') : 0,
     warnings: testSuite.getAttribute('warnings') ? testSuite.getAttribute('warnings') : 0,
     failures: testSuite.getAttribute('failures') ? testSuite.getAttribute('failures') : 0,
@@ -186,29 +218,44 @@ function getNodeDataTest(testSuite) {
   };
 }
 
-function pushJsonUnitAndFeature(node) {
-  var unitclassTestSuite = node.getElementsByTagName('testsuite');
-  var nodeTestUnit = getNodeDataTest(node);
-  nodeTestUnit.class = [];
+function getJsonFromTestSuite(node) {
+  let rootTestSuite = null;
+  switch (languageJunit.value) {
+    case 'PHP':
+      rootTestSuite = node.getElementsByTagName('testsuite')[1];
+      break;
+    case 'PYTHON':
+      rootTestSuite = node;
+      break;
+    case 'NODEJS':
+      rootTestSuite = node[0];
+      break;
+    default:
+      rootTestSuite = node[0];
+      break;
+  }
+  var unitclassTestSuite = rootTestSuite.getElementsByTagName('testsuite');
+  let json = [];
   for (let index = 0; index < unitclassTestSuite.length; index++) {
-    var nodeTestUnitClass = getNodeDataTest(unitclassTestSuite[index]);
-    nodeTestUnitClass.testCase = [];
-    var unitTestCase = unitclassTestSuite[index].getElementsByTagName('testcase');
-    for (let indexTestCase = 0; indexTestCase < unitTestCase.length; indexTestCase++) {
-      let element = unitTestCase[indexTestCase];
-      nodeTestUnitClass.testCase.push(getNodeDataTest(element));
-    }
-    nodeTestUnit.class.push(nodeTestUnitClass);
+    let testSuilteCoverTestCase = unitclassTestSuite[index];
+    json.push(pushJsonDataTestSuilte(testSuilteCoverTestCase));
+  }
+  return json;
+}
+
+function pushJsonDataTestSuilte(rootTestSuite) {
+  var nodeTestUnit = getNodeDataTest(rootTestSuite);
+  nodeTestUnit.class = [];
+  let testCase = rootTestSuite.getElementsByTagName('testcase');
+  for (let index = 0; index < testCase.length; index++) {
+    let element = testCase[index];
+    nodeTestUnit.class.push(getNodeDataTest(element));
   }
   return nodeTestUnit;
 }
 
 function getJsonData(xml) {
-  var jsonData = [];
-  var testSuites = xml.getElementsByTagName('testsuite');
-  var unitTestSuite = Number(numberIgnore.value) !== 0 ? testSuites[numberIgnore.value - 1] : testSuites[0];
-  jsonData.push(pushJsonUnitAndFeature(unitTestSuite));
-  return jsonData;
+  return getJsonFromTestSuite(xml);
 }
 
 function displayJsonAsTable(jsonData) {
@@ -217,17 +264,14 @@ function displayJsonAsTable(jsonData) {
   table.className = 'data-table';
   var tableBody = document.createElement('tbody');
   var rowIndex = 1;
-
   for (var i = 0; i < jsonData.length; i++) {
     var data = jsonData[i];
-
     var tableHead = document.createElement('thead');
 
     var headRow = document.createElement('tr');
     var thNo = document.createElement('th');
     thNo.textContent = 'No.';
     headRow.appendChild(thNo);
-
     for (var key in data) {
       if (key !== 'class') {
         var th = document.createElement('th');
@@ -241,6 +285,10 @@ function displayJsonAsTable(jsonData) {
     if (i === 0) {
       table.appendChild(tableHead);
     }
+
+    tableBody = genereateRowTestSuilte(data, tableBody, rowIndex, false);
+    table.appendChild(tableBody);
+    rowIndex++;
 
     if (data?.class) {
       for (let index = 0; index < data?.class.length; index++) {
@@ -270,6 +318,23 @@ function genereateRowTestCase(data, tableBody, rowIndex) {
 
   for (var key in data) {
     if (key !== 'testCase') {
+      var cell = document.createElement('td');
+      cell.textContent = data[key];
+      row.appendChild(cell);
+    }
+  }
+
+  return tableBody.appendChild(row);
+}
+
+function genereateRowTestSuilte(data, tableBody, rowIndex) {
+  var row = document.createElement('tr');
+  var cellNo = document.createElement('td');
+  cellNo.textContent = rowIndex;
+  row.appendChild(cellNo);
+
+  for (var key in data) {
+    if (key !== 'class') {
       var cell = document.createElement('td');
       cell.textContent = data[key];
       row.appendChild(cell);
