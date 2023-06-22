@@ -1,14 +1,11 @@
 <template>
   <div>
     <div class="form-center">
-      <n-upload v-model:file-list="fileList" :on-before-upload="onUpload" :multiple="false" :limit="1">
-        <div>
-          <n-space justify="center">
-            <n-button> Upload XML </n-button>
-          </n-space>
-        </div>
+      <n-upload v-model="fileList" mode="drag" :on-before-upload="onUpload" :multiple="false" :max="1">
+        <n-space justify="center">
+          <n-button> Upload XML </n-button>
+        </n-space>
       </n-upload>
-      <br />
       <n-form-item label="Chose Language:" label-placement="left">
         <n-space>
           <input id="php" type="radio" name="languageJunit" value="PHP" checked="true" :onChange="onChangeLanguage" />
@@ -23,15 +20,15 @@
       <n-checkbox
         v-model="prettyClassTestCase"
         :on-update:checked="onChangePerrtyClassTestCase"
-        label="pretty class test name"
+        label="Pretty Class Test Name"
         size="large"
       />
       <br /><br />
-      <n-space justify="center">
+      <n-space>
         <n-button secondary autofocus @click="loadXML"> Load XML </n-button>
         <n-button secondary @click="exportTableToCSV"> Export CSV </n-button>
       </n-space>
-      <br /><br />
+      <br />
     </div>
     <table id="table-container" class="table"></table>
   </div>
@@ -120,8 +117,6 @@ function convertToCSV(jsonData, indexRow) {
       .join(',');
     csv += headerRowData + '\n';
   }
-  console.log(jsonData);
-
   var rowDataTestSuilte = Object.values(jsonData)
     .map(function (value) {
       return '"' + value + '"';
@@ -184,17 +179,11 @@ function getNodeDataTest(testSuite) {
     case 'PHP':
       assertions = testSuite.getAttribute('assertions') ? testSuite.getAttribute('assertions') : 0;
       break;
-    case 'PYTHON':
+    default:
       assertions = testSuite.getAttribute('assertions') ? testSuite.getAttribute('assertions') : 1;
       if (testSuite.nodeName === 'testsuite') {
         assertions = testSuite.getAttribute('tests');
       }
-      break;
-    case 'NODEJS':
-      assertions = testSuite.getAttribute('assertions') ? testSuite.getAttribute('assertions') : 0;
-      break;
-    default:
-      assertions = testSuite.getAttribute('assertions') ? testSuite.getAttribute('assertions') : 0;
       break;
   }
   if (testSuite.nodeName === 'testsuite') {
@@ -224,14 +213,8 @@ function getJsonFromTestSuite(node) {
     case 'PHP':
       rootTestSuite = node.getElementsByTagName('testsuite')[1];
       break;
-    case 'PYTHON':
-      rootTestSuite = node;
-      break;
-    case 'NODEJS':
-      rootTestSuite = node[0];
-      break;
     default:
-      rootTestSuite = node[0];
+      rootTestSuite = node;
       break;
   }
   var unitclassTestSuite = rootTestSuite.getElementsByTagName('testsuite');
