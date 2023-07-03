@@ -1,0 +1,9 @@
+# package directories
+layers/nodejs/node_modules
+jspm_packages
+
+# Serverless directories
+.serverless
+
+# config Env
+config.*

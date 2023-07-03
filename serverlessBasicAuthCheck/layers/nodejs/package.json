@@ -1,0 +1,19 @@
+{
+  "name": "lambdaupload",
+  "version": "1.0.0",
+  "description": "Nal Tool",
+  "main": "handler.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "aws-sdk": "^2.1407.0",
+    "axios": "^1.4.0",
+    "csv-parser": "^3.0.0",
+    "csv-writer": "^1.6.0",
+    "dotenv": "^16.3.1",
+    "stream": "^0.0.2"
+  }
+}

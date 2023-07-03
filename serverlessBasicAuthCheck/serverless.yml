@@ -1,0 +1,65 @@
+service: lambdaupload
+
+frameworkVersion: "3"
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  profile: ${file(./config.${opt:stage, 'dev'}.json):PROFILE_NAME_AWS}
+  stage: ${opt:stage, 'dev'}
+  iam:
+    role:
+      statements:
+        - Effect: "Allow"
+          Action:
+            - "s3:ListBucket"
+          Resource: "*"
+        - Effect: "Allow"
+          Action:
+            - "s3:PutObject"
+            - "s3:GetObject"
+          Resource:
+            - "arn:aws:s3:::${file(./config.${opt:stage, 'dev'}.json):S3_BUCKET_NAME}/${file(./config.${opt:stage, 'dev'}.json):S3_BUCKET_PATH}"
+        - Effect: "Allow"
+          Action:
+            - "ses:SendEmail"
+          Resource: "*"
+
+layers:
+  commonLibs:
+    path: layers
+    compatibleRuntimes:
+      - nodejs18.x
+
+functions:
+  uploadDomain:
+    handler: src/functions/handler.uploadDomain
+    environment:
+      S3_BUCKET_NAME: ${file(./config.${opt:stage, 'dev'}.json):S3_BUCKET_NAME}
+      S3_FILE_DOMAIN_NAME: ${file(./config.${opt:stage, 'dev'}.json):S3_FILE_DOMAIN_NAME}
+      REGION: ${file(./config.${opt:stage, 'dev'}.json):REGION}
+    layers:
+      - !Ref CommonLibsLambdaLayer
+    events:
+      - http:
+          path: csv
+          method: post
+          integration: lambda
+
+  readDomain:
+    handler: src/functions/handlerReadCsv.readDomain
+    environment:
+      S3_BUCKET_NAME: ${file(./config.${opt:stage, 'dev'}.json):S3_BUCKET_NAME}
+      S3_FILE_DOMAIN_NAME: ${file(./config.${opt:stage, 'dev'}.json):S3_FILE_DOMAIN_NAME}
+      CHANEL_EMAIL: ${file(./config.${opt:stage, 'dev'}.json):CHANEL_EMAIL}
+      REGION: ${file(./config.${opt:stage, 'dev'}.json):REGION}
+    events:
+      - http:
+          path: csv
+          method: get
+          integration: lambda
+      - eventBridge:
+          schedule: cron(0 1 * * ? *)
+          enabled:  true
+    layers: 
+      - !Ref CommonLibsLambdaLayer
