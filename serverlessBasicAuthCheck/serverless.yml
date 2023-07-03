@@ -7,6 +7,8 @@ provider:
   runtime: nodejs18.x
   profile: ${file(./config.${opt:stage, 'dev'}.json):PROFILE_NAME_AWS}
   stage: ${opt:stage, 'dev'}
+  memorySize: 128
+  timeout: 120
   iam:
     role:
       statements:
@@ -45,6 +47,7 @@ functions:
           path: csv
           method: post
           integration: lambda
+    
 
   readDomain:
     handler: src/functions/handlerReadCsv.readDomain

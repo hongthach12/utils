@@ -27,11 +27,21 @@ cat ~/.aws/config
 }
 ```
 
-## NOTE
+### NOTE
 
 1. Verify Email Ses Chanel Reprot
 2. Create Bucket S3
 
+## Install Node Module
+
+```
+cd serverlessBasicAuthCheck/layers/nodejs
+npm install
+cd ../../
+```
+
 ## Deploy
 
+```
 sls deploy --stage your_state
+```

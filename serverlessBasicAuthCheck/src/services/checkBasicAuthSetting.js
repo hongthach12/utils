@@ -2,13 +2,13 @@
 const axios = require('axios');
 async function checkBasicAuthSetting(domain) {
     try {
-      const response = await axios.get(domain.URL, {
-        timeout: 10000 
+      const response = await axios.head(domain.URL, {
+        timeout: 1000
       });
       
-      return response.status;
+      return response?.status;
     } catch (error) {
-      return error.response.status;
+      return error.status == null ? '500 timeout': error?.status;
     }
 }
 

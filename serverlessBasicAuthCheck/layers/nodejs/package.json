@@ -1,6 +1,9 @@
 {
   "name": "lambdaupload",
   "version": "1.0.0",
+  "engines": {
+    "node": "=18.16.x"
+  },
   "description": "Nal Tool",
   "main": "handler.js",
   "scripts": {
