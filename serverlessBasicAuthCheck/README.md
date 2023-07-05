@@ -23,7 +23,8 @@ cat ~/.aws/config
     "S3_FILE_DOMAIN_NAME": "domain.csv",
     "CHANEL_EMAIL": "",
     "REGION": "",
-    "PROFILE_NAME_AWS": ""
+    "PROFILE_NAME_AWS": "",
+    "QUEUE_NAME": ""
 }
 ```
 

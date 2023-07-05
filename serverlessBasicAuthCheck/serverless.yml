@@ -7,8 +7,7 @@ provider:
   runtime: nodejs18.x
   profile: ${file(./config.${opt:stage, 'dev'}.json):PROFILE_NAME_AWS}
   stage: ${opt:stage, 'dev'}
-  memorySize: 128
-  timeout: 120
+  memorySize: ${file(./config.${opt:stage, 'dev'}.json):MEMORY_SIZE, 128}
   iam:
     role:
       statements:
@@ -26,6 +25,18 @@ provider:
           Action:
             - "ses:SendEmail"
           Resource: "*"
+        - Effect: Allow
+          Action:
+            - sqs:*
+          Resource:
+            Fn::GetAtt: [ MyQueue, Arn ]
+
+resources:
+  Resources:
+    MyQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${file(./config.${opt:stage, 'dev'}.json):QUEUE_NAME, 'nal_tool_queue'}
 
 layers:
   commonLibs:
@@ -34,6 +45,22 @@ layers:
       - nodejs18.x
 
 functions:
+  shotQueueToSQS:
+    handler: src/functions/shotQueueToSQS.handler
+    environment:
+      REGION: ${file(./config.${opt:stage, 'dev'}.json):REGION}
+      QUEUE_NAME: ${file(./config.${opt:stage, 'dev'}.json):QUEUE_NAME, 'nal_tool_queue'}
+    layers:
+      - !Ref CommonLibsLambdaLayer
+    events:
+      - http:
+          path: dispath-csv-queue
+          method: post
+          integration: lambda
+      - eventBridge:
+          schedule: cron(0 1 * * ? *)
+          enabled:  true
+
   uploadDomain:
     handler: src/functions/handler.uploadDomain
     environment:
@@ -47,7 +74,6 @@ functions:
           path: csv
           method: post
           integration: lambda
-    
 
   readDomain:
     handler: src/functions/handlerReadCsv.readDomain
@@ -57,12 +83,9 @@ functions:
       CHANEL_EMAIL: ${file(./config.${opt:stage, 'dev'}.json):CHANEL_EMAIL}
       REGION: ${file(./config.${opt:stage, 'dev'}.json):REGION}
     events:
-      - http:
-          path: csv
-          method: get
-          integration: lambda
-      - eventBridge:
-          schedule: cron(0 1 * * ? *)
-          enabled:  true
+      - sqs:
+          arn:
+            Fn::GetAtt: [MyQueue, Arn]
     layers: 
       - !Ref CommonLibsLambdaLayer
+  
