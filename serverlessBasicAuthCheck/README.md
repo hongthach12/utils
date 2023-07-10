@@ -23,15 +23,26 @@ cat ~/.aws/config
     "S3_FILE_DOMAIN_NAME": "domain.csv",
     "CHANEL_EMAIL": "",
     "REGION": "",
-    "PROFILE_NAME_AWS": ""
+    "PROFILE_NAME_AWS": "",
+    "QUEUE_NAME": ""
 }
 ```
 
-## NOTE
+### NOTE
 
 1. Verify Email Ses Chanel Reprot
 2. Create Bucket S3
 
+## Install Node Module
+
+```
+cd serverlessBasicAuthCheck/layers/nodejs
+npm install
+cd ../../
+```
+
 ## Deploy
 
+```
 sls deploy --stage your_state
+```
