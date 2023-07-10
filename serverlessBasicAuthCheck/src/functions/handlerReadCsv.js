@@ -18,10 +18,13 @@ module.exports.readDomain = async (event) => {
         isBasicAuthEnabled: isBasicAuthEnabled
       });
     }
+    console.log(result);
     const emailSubject = 'Basic Auth Domain Check';
-    sendEmailReport(emailSubject, result);
+    const sendEmail = await sendEmailReport(emailSubject, result);
+    console.log(sendEmail);
     return true;
   } catch (error) {
+    console.log(error);
     return false;
   }
 };
