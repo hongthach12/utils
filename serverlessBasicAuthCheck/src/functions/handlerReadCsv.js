@@ -1,44 +1,16 @@
 'use strict';
 const AWS = require('aws-sdk');
-const csvParser = require('csv-parser');
+const axios = require('axios');
 
 AWS.config.update({ region: process.env.REGION });
 
-const s3 = new AWS.S3();
-const bucketName = process.env.S3_BUCKET_NAME;
-const keyFileDomain = process.env.S3_FILE_DOMAIN_NAME;
-
 //Services
 const { sendEmailReport } = require('../services/sendEmailReport');
-const { checkBasicAuthSetting } = require('../services/checkBasicAuthSetting');
 
 module.exports.readDomain = async (event) => {
-
-  const getObjectParams = {
-    Bucket: bucketName,
-    Key: keyFileDomain
-  };
-
   try {
-    const s3Stream = s3.getObject(getObjectParams).createReadStream();
-
-    const csvData = [];
-    await new Promise((resolve, reject) => {
-      s3Stream
-        .pipe(csvParser())
-        .on('data', (data) => {
-          csvData.push(data);
-        })
-        .on('end', () => {
-          resolve();
-        })
-        .on('error', (error) => {
-          reject(error);
-        });
-    });
-
     const result = [];
-    
+    const csvData = JSON.parse(event?.Records[0]?.body)?.csvData; 
     for (const domain of csvData) {
       const isBasicAuthEnabled = await checkBasicAuthSetting(domain);
       result.push({
@@ -46,22 +18,27 @@ module.exports.readDomain = async (event) => {
         isBasicAuthEnabled: isBasicAuthEnabled
       });
     }
-
     const emailSubject = 'Basic Auth Domain Check';
-    const resultSendMail =  await sendEmailReport(emailSubject, result);
-
-    return {
-      statusCode: 200,
-      result,
-      resultSendMail
-    };
+    sendEmailReport(emailSubject, result);
+    return true;
   } catch (error) {
-    return {
-      statusCode: 500,
-      body: JSON.stringify({
-        error: 'Failed to read CSV file from S3',
-        message: error.message
-      })
-    };
+    return false;
   }
 };
+
+async function checkBasicAuthSetting(domain) {
+  try {
+    const response = await axios.head(domain.URL, {
+      timeout: 2000
+    });
+    return response?.status;
+  } catch (error) {
+    const statusError = error?.response?.status == null ? 500 : error?.response?.status;
+    if(statusError == 500){
+      return error?.status == null ? 'timeout or 500' : error?.status;
+    } else {
+      return statusError
+    }
+    
+  }
+}

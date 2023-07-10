@@ -7,7 +7,7 @@ provider:
   runtime: nodejs18.x
   profile: ${file(./config.${opt:stage, 'dev'}.json):PROFILE_NAME_AWS}
   stage: ${opt:stage, 'dev'}
-  memorySize: ${file(./config.${opt:stage, 'dev'}.json):MEMORY_SIZE, 128}
+  memorySize: ${file(./config.${opt:stage, 'dev'}.json):MEMORY_SIZE, 256}
   iam:
     role:
       statements:
@@ -36,6 +36,7 @@ resources:
     MyQueue:
       Type: AWS::SQS::Queue
       Properties:
+        VisibilityTimeout: 600
         QueueName: ${file(./config.${opt:stage, 'dev'}.json):QUEUE_NAME, 'nal_tool_queue'}
 
 layers:
@@ -50,8 +51,11 @@ functions:
     environment:
       REGION: ${file(./config.${opt:stage, 'dev'}.json):REGION}
       QUEUE_NAME: ${file(./config.${opt:stage, 'dev'}.json):QUEUE_NAME, 'nal_tool_queue'}
+      S3_BUCKET_NAME: ${file(./config.${opt:stage, 'dev'}.json):S3_BUCKET_NAME}
+      S3_FILE_DOMAIN_NAME: ${file(./config.${opt:stage, 'dev'}.json):S3_FILE_DOMAIN_NAME}
     layers:
       - !Ref CommonLibsLambdaLayer
+    
     events:
       - http:
           path: dispath-csv-queue
@@ -59,7 +63,7 @@ functions:
           integration: lambda
       - eventBridge:
           schedule: cron(0 1 * * ? *)
-          enabled:  true
+          enabled: ${file(./config.${opt:stage, 'dev'}.json):EVENT_BRIDGE_ENABLE, true}
 
   uploadDomain:
     handler: src/functions/handler.uploadDomain
@@ -86,6 +90,9 @@ functions:
       - sqs:
           arn:
             Fn::GetAtt: [MyQueue, Arn]
+          batchSize: 1
     layers: 
       - !Ref CommonLibsLambdaLayer
+    timeout: 500
+    maximumRetryAttempts: 1
   
