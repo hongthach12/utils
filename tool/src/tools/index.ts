@@ -41,6 +41,7 @@ import { tool as urlEncoder } from './url-encoder';
 import { tool as urlParser } from './url-parser';
 import { tool as uuidGenerator } from './uuid-generator';
 import { tool as junitXmlToCsv } from './junit-xml-to-csv';
+import { tool as basicAuth } from './basic-auth-check';
 
 export const toolsByCategory: ToolCategory[] = [
   {
@@ -83,7 +84,16 @@ export const toolsByCategory: ToolCategory[] = [
   },
   {
     name: 'Development',
-    components: [gitMemo, randomPortGenerator, crontabGenerator, jsonViewer, jsonMinify, sqlPrettify, chmodCalculator],
+    components: [
+      gitMemo,
+      randomPortGenerator,
+      crontabGenerator,
+      jsonViewer,
+      jsonMinify,
+      sqlPrettify,
+      chmodCalculator,
+      basicAuth,
+    ],
   },
   {
     name: 'Math',
