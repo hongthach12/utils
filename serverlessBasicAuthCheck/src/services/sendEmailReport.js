@@ -8,7 +8,7 @@ async function sendEmailReport(subject, body) {
     let basicAuthDisabledDomains = [];
   
     for (const domain of body) {
-      if (domain.isBasicAuthEnabled !== 401) {
+      if (domain.isBasicAuthEnabled === 200) {
         basicAuthDisabledDomains.push(domain.domain);
       } else {
         basicAuthEnabledDomains.push(domain.domain);

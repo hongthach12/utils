@@ -38,7 +38,7 @@ async function checkBasicAuthSetting(domain) {
   } catch (error) {
     const statusError = error?.response?.status == null ? 500 : error?.response?.status;
     if(statusError == 500){
-      return error?.status == null ? 'timeout or 500' : error?.status;
+      return error?.status == null ? 500 : error?.status;
     } else {
       return statusError
     }
