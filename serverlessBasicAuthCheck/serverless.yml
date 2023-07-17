@@ -38,7 +38,16 @@ resources:
       Properties:
         VisibilityTimeout: 600
         QueueName: ${file(./config.${opt:stage, 'dev'}.json):QUEUE_NAME, 'nal_tool_queue'}
-
+    GatewayResponseDefault4XX:
+       Type: 'AWS::ApiGateway::GatewayResponse'
+       Properties:
+         ResponseParameters:
+           gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+           gatewayresponse.header.Access-Control-Allow-Headers: "'*'"
+         ResponseType: DEFAULT_4XX
+         RestApiId:
+           Ref: 'ApiGatewayRestApi'
+    
 layers:
   commonLibs:
     path: layers
@@ -61,6 +70,7 @@ functions:
           path: dispath-csv-queue
           method: post
           integration: lambda
+          cors: true
       - eventBridge:
           schedule: cron(0 1 * * ? *)
           enabled: ${file(./config.${opt:stage, 'dev'}.json):EVENT_BRIDGE_ENABLE, true}
@@ -78,6 +88,7 @@ functions:
           path: csv
           method: post
           integration: lambda
+          cors: true
 
   readDomain:
     handler: src/functions/handlerReadCsv.readDomain
