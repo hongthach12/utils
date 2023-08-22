@@ -41,6 +41,7 @@ import { tool as urlEncoder } from './url-encoder';
 import { tool as urlParser } from './url-parser';
 import { tool as uuidGenerator } from './uuid-generator';
 import { tool as junitXmlToCsv } from './junit-xml-to-csv';
+import { tool as encodingCsvDetect } from './encoding-csv-detect';
 import { tool as basicAuth } from './basic-auth-check';
 
 export const toolsByCategory: ToolCategory[] = [
@@ -93,6 +94,7 @@ export const toolsByCategory: ToolCategory[] = [
       sqlPrettify,
       chmodCalculator,
       basicAuth,
+      encodingCsvDetect,
     ],
   },
   {
