@@ -74,7 +74,8 @@ function exportTableToCSV() {
     for (let i = 0; i < jsonData.length; i++) {
       csv += convertToCSV(jsonData[i], i);
     }
-    var encodedUri = encodeURI('data:text/csv;charset=utf-8,' + csv);
+    var encodedCsvData = encodeURIComponent(csv);
+    var encodedUri = 'data:text/csv;charset=utf-8,' + encodedCsvData;
     var link = document.createElement('a');
     link.setAttribute('href', encodedUri);
     link.setAttribute('download', 'table.csv');
