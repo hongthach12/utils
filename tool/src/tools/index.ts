@@ -44,6 +44,7 @@ import { tool as uuidGenerator } from './uuid-generator';
 import { tool as junitXmlToCsv } from './junit-xml-to-csv';
 import { tool as encodingCsvDetect } from './encoding-csv-detect';
 import { tool as basicAuth } from './basic-auth-check';
+import { tool as websiteComparator } from './website-comparator';
 
 export const toolsByCategory: ToolCategory[] = [
   {
@@ -79,6 +80,7 @@ export const toolsByCategory: ToolCategory[] = [
       keycodeInfo,
       slugifyString,
       drawMap,
+      websiteComparator,
     ],
   },
   {
