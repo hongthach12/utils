@@ -368,7 +368,7 @@ async function compareWebsites() {
 
   try {
     // Create a proxy endpoint to avoid CORS issues
-    const proxyUrl = 'https://api.allorigins.win/get?url=';
+    const proxyUrl = 'https://52axut43tlfebc2ryzigbxuvfq0vcjqm.lambda-url.ap-northeast-1.on.aws?url=';
     
     const [result1, result2] = await Promise.all([
       fetch(`${proxyUrl}${encodeURIComponent(url1.value)}`),
